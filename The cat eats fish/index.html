@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猫吃鱼大冒险 - Cat Fish Adventure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF6B35;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --bg-dark: #1a1a2e;
+            --bg-medium: #16213e;
+            --bg-light: #0f3460;
+            --text: #ffffff;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --gold: #f39c12;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 50%, var(--bg-light) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: var(--text);
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .game-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            color: var(--accent);
+            text-shadow: 2px 2px 0 var(--primary);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 2px 2px 0 var(--primary), 0 0 10px var(--accent); }
+            to { text-shadow: 2px 2px 0 var(--primary), 0 0 20px var(--accent), 0 0 30px var(--primary); }
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 25px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+        }
+
+        .stat-icon {
+            font-size: 18px;
+        }
+
+        .stat-value {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            border-radius: 15px;
+            background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 100%);
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .items-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            margin-top: 15px;
+        }
+
+        .item-slot {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .item-slot:hover:not(.empty) {
+            transform: scale(1.1);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(255, 230, 109, 0.5);
+        }
+
+        .item-slot.empty {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .item-slot .item-icon {
+            font-size: 22px;
+        }
+
+        .item-slot .item-key {
+            font-size: 9px;
+            font-weight: 700;
+            margin-top: 2px;
+            color: var(--accent);
+        }
+
+        .item-slot .item-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            border-radius: 20px;
+        }
+
+        .menu-overlay.hidden {
+            display: none;
+        }
+
+        .menu-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 28px;
+            color: var(--accent);
+            text-align: center;
+            margin-bottom: 10px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .menu-subtitle {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 40px;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .menu-btn {
+            font-family: 'Nunito', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .menu-btn.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #ff8c42 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .menu-btn.secondary {
+            background: linear-gradient(135deg, var(--secondary) 0%, #45b7aa 100%);
+            color: white;
+            box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.6);
+        }
+
+        .level-select {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .level-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 15px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .level-btn:hover:not(.locked) {
+            transform: scale(1.1);
+            border-color: var(--accent);
+            background: rgba(255, 230, 109, 0.2);
+        }
+
+        .level-btn.locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .level-btn .level-name {
+            font-size: 8px;
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+
+        .result-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            border-radius: 20px;
+        }
+
+        .result-overlay.hidden {
+            display: none;
+        }
+
+        .result-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 32px;
+            margin-bottom: 20px;
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .result-title.fail { color: var(--danger); }
+        .result-title.pass { color: var(--secondary); }
+        .result-title.good { color: var(--accent); }
+        .result-title.perfect { color: #ff69b4; }
+
+        .result-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            min-width: 300px;
+        }
+
+        .result-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-stat-label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .result-stat-value {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            color: var(--accent);
+        }
+
+        .leaderboard {
+            width: 100%;
+            max-width: 600px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .leaderboard-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .leaderboard-entry:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .leaderboard-entry.highlight {
+            background: rgba(255, 230, 109, 0.2);
+            border: 1px solid var(--accent);
+        }
+
+        .leaderboard-rank {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            width: 40px;
+            color: var(--accent);
+        }
+
+        .leaderboard-rank.gold { color: #ffd700; }
+        .leaderboard-rank.silver { color: #c0c0c0; }
+        .leaderboard-rank.bronze { color: #cd7f32; }
+
+        .leaderboard-name {
+            flex: 1;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .leaderboard-score {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            color: var(--secondary);
+        }
+
+        .leaderboard-date {
+            font-size: 10px;
+            opacity: 0.5;
+            margin-left: 15px;
+        }
+
+        .name-input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .name-input-label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .name-input {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 24px;
+            text-align: center;
+            text-transform: uppercase;
+            width: 150px;
+            padding: 15px;
+            border: 3px solid var(--accent);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: var(--accent);
+            outline: none;
+        }
+
+        .name-input:focus {
+            box-shadow: 0 0 20px rgba(255, 230, 109, 0.5);
+        }
+
+        .help-content {
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 20px;
+        }
+
+        .help-section {
+            margin-bottom: 25px;
+        }
+
+        .help-section h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            color: var(--accent);
+            margin-bottom: 15px;
+        }
+
+        .help-section p {
+            font-size: 14px;
+            line-height: 1.8;
+            opacity: 0.9;
+        }
+
+        .help-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .help-table th,
+        .help-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .help-table th {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .help-table td:first-child {
+            width: 80px;
+        }
+
+        .controls-hint {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .key-hint {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .key {
+            background: var(--accent);
+            color: var(--bg-dark);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .paused-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 24px;
+            color: var(--accent);
+            text-shadow: 2px 2px 0 var(--primary);
+            z-index: 50;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        .paused-indicator.hidden {
+            display: none;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .floating-score {
+            position: absolute;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            color: var(--accent);
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 60;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 55;
+            overflow: hidden;
+            border-radius: 20px;
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: particleFade 1s ease-out forwards;
+        }
+
+        @keyframes particleFade {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            border-left: 4px solid var(--accent);
+            color: white;
+            font-weight: 600;
+            z-index: 200;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 72px;
+            color: var(--accent);
+            text-shadow: 4px 4px 0 var(--primary);
+            z-index: 70;
+            animation: countPulse 1s ease-in-out;
+        }
+
+        .countdown.hidden {
+            display: none;
+        }
+
+        @keyframes countPulse {
+            0% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 10px;
+                border-radius: 15px;
+            }
+            
+            .game-title {
+                font-size: 10px;
+            }
+            
+            .stats-bar {
+                gap: 15px;
+            }
+            
+            .stat-value {
+                font-size: 10px;
+            }
+            
+            .item-slot {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .menu-title {
+                font-size: 18px;
+            }
+            
+            .level-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="game-header">
+            <div class="game-title">猫吃鱼大冒险</div>
+            <div class="stats-bar">
+                <div class="stat">
+                    <span class="stat-icon">🎮</span>
+                    <div>
+                        <div class="stat-value" id="levelDisplay">1</div>
+                        <div class="stat-label">关卡</div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon">⭐</span>
+                    <div>
+                        <div class="stat-value" id="scoreDisplay">0</div>
+                        <div class="stat-label">得分</div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon">⏱️</span>
+                    <div>
+                        <div class="stat-value" id="timeDisplay">120</div>
+                        <div class="stat-label">时间</div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-icon">🐟</span>
+                    <div>
+                        <div class="stat-value" id="fishDisplay">0/30</div>
+                        <div class="stat-label">进度</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="860" height="540"></canvas>
+
+        <div class="items-bar" id="itemsBar">
+            <div class="item-slot empty" data-index="0" onclick="game.useItem(0)">
+                <span class="item-icon">⚡</span>
+                <span class="item-key">1</span>
+            </div>
+            <div class="item-slot empty" data-index="1" onclick="game.useItem(1)">
+                <span class="item-icon">🛡️</span>
+                <span class="item-key">2</span>
+            </div>
+            <div class="item-slot empty" data-index="2" onclick="game.useItem(2)">
+                <span class="item-icon">🐾</span>
+                <span class="item-key">3</span>
+            </div>
+            <div class="item-slot empty" data-index="3" onclick="game.useItem(3)">
+                <span class="item-icon">❄️</span>
+                <span class="item-key">4</span>
+            </div>
+            <div class="item-slot empty" data-index="4" onclick="game.useItem(4)">
+                <span class="item-icon">🎪</span>
+                <span class="item-key">5</span>
+            </div>
+            <div class="item-slot empty" data-index="5" onclick="game.useItem(5)">
+                <span class="item-icon">⏰</span>
+                <span class="item-key">6</span>
+            </div>
+        </div>
+
+        <div class="paused-indicator hidden" id="pausedIndicator">⏸️ 已暂停</div>
+        <div class="countdown hidden" id="countdown"></div>
+        <div class="particles-container" id="particlesContainer"></div>
+
+        <div class="menu-overlay" id="mainMenu">
+            <div class="menu-title">猫吃鱼大冒险</div>
+            <div class="menu-subtitle">🐱 帮助饥饿的猫咪吃掉所有的鱼！</div>
+            <div class="menu-buttons">
+                <button class="menu-btn primary" onclick="game.showLevelSelect()">开始游戏</button>
+                <button class="menu-btn secondary" onclick="game.showLeaderboard()">排行榜</button>
+                <button class="menu-btn secondary" onclick="game.showHelp()">游戏说明</button>
+            </div>
+        </div>
+
+        <div class="menu-overlay hidden" id="levelSelectMenu">
+            <div class="menu-title">选择关卡</div>
+            <div class="level-select" id="levelSelectGrid"></div>
+            <button class="menu-btn secondary" onclick="game.showMainMenu()">返回</button>
+        </div>
+
+        <div class="menu-overlay hidden" id="pauseMenu">
+            <div class="menu-title">游戏暂停</div>
+            <div class="menu-buttons">
+                <button class="menu-btn primary" onclick="game.resumeGame()">继续游戏</button>
+                <button class="menu-btn secondary" onclick="game.restartLevel()">重新开始</button>
+                <button class="menu-btn secondary" onclick="game.quitToMenu()">退出游戏</button>
+            </div>
+        </div>
+
+        <div class="result-overlay hidden" id="levelResult">
+            <div class="result-title" id="resultTitle">关卡完成!</div>
+            <div class="result-stats" id="resultStats"></div>
+            <div class="menu-buttons" id="resultButtons"></div>
+        </div>
+
+        <div class="menu-overlay hidden" id="leaderboardMenu">
+            <div class="leaderboard">
+                <div class="leaderboard-title">🏆 积分排行榜 🏆</div>
+                <div id="leaderboardList"></div>
+            </div>
+            <button class="menu-btn secondary" style="margin-top: 20px;" onclick="game.showMainMenu()">返回</button>
+        </div>
+
+        <div class="menu-overlay hidden" id="nameInputMenu">
+            <div class="menu-title">新纪录!</div>
+            <div class="name-input-container">
+                <div class="name-input-label">输入你的名字（3个字符）</div>
+                <input type="text" class="name-input" id="playerNameInput" maxlength="3" placeholder="AAA">
+            </div>
+            <div class="menu-buttons">
+                <button class="menu-btn primary" onclick="game.saveScore()">保存分数</button>
+            </div>
+        </div>
+
+        <div class="menu-overlay hidden" id="helpMenu">
+            <div class="help-content">
+                <div class="help-section">
+                    <h3>📖 游戏目标</h3>
+                    <p>操控猫咪在迷宫中吃掉尽可能多的鱼。每一关你需要吃到至少60%的鱼才能通过。如果吃得越多评价越高！</p>
+                </div>
+                <div class="help-section">
+                    <h3>🎮 操作方式</h3>
+                    <div class="controls-hint">
+                        <div class="key-hint"><span class="key">↑↓←→</span> 或 <span class="key">WASD</span> 移动</div>
+                        <div class="key-hint"><span class="key">1-6</span> 使用道具</div>
+                        <div class="key-hint"><span class="key">ESC</span> 暂停</div>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <h3>🐟 鱼类分值</h3>
+                    <table class="help-table">
+                        <tr><th>类型</th><th>分值</th><th>颜色</th></tr>
+                        <tr><td>普通鱼</td><td>100分</td><td>灰色</td></tr>
+                        <tr><td>金鱼</td><td>300分</td><td>金色</td></tr>
+                        <tr><td>能量鱼</td><td>500分</td><td>彩虹</td></tr>
+                    </table>
+                </div>
+                <div class="help-section">
+                    <h3>⚡ 道具效果</h3>
+                    <table class="help-table">
+                        <tr><th>道具</th><th>效果</th><th>持续</th></tr>
+                        <tr><td>⚡ 闪电靴</td><td>移动速度+50%</td><td>10秒</td></tr>
+                        <tr><td>🛡️ 护盾</td><td>无敌状态</td><td>8秒</td></tr>
+                        <tr><td>🐾 猫薄荷</td><td>隐身效果</td><td>5秒</td></tr>
+                        <tr><td>❄️ 冰冻弹</td><td>冻结所有老鼠</td><td>6秒</td></tr>
+                        <tr><td>🎪 召唤术</td><td>召唤假猫分散注意</td><td>12秒</td></tr>
+                        <tr><td>⏰ 时间沙漏</td><td>增加30秒</td><td>即时</td></tr>
+                    </table>
+                </div>
+                <div class="help-section">
+                    <h3>🐭 老鼠行为</h3>
+                    <p>老鼠会偷走未及时吃掉的鱼！它们会巡逻、追踪猫咪、偷鱼。当心不要让它们偷走太多鱼！</p>
+                    <p><strong>🐱 猫吃老鼠：</strong>连续碰到同一只老鼠两次，就可以吃掉它获得200分！第一次碰到会警告需要再碰一次。</p>
+                </div>
+                <div class="help-section">
+                    <h3>🏆 评价等级</h3>
+                    <table class="help-table">
+                        <tr><th>评价</th><th>条件</th><th>奖励</th></tr>
+                        <tr><td>失败</td><td>&lt; 60%</td><td>无</td></tr>
+                        <tr><td>通过</td><td>60-80%</td><td>+1000</td></tr>
+                        <tr><td>优秀</td><td>80-99%</td><td>+3000</td></tr>
+                        <tr><td>完美</td><td>100%</td><td>+5000</td></tr>
+                    </table>
+                </div>
+                <button class="menu-btn secondary" style="margin-top: 20px;" onclick="game.showMainMenu()">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const LEVELS = [
+            { id: 1, name: '小鱼塘', fishCount: 30, mouseCount: 2, timeLimit: 120, mazeComplexity: 'simple', itemTypes: ['speed', 'shield'], mouseSpeedMult: 1.0 },
+            { id: 2, name: '金鱼池', fishCount: 40, mouseCount: 3, timeLimit: 130, mazeComplexity: 'simple', itemTypes: ['speed', 'shield', 'freeze'], mouseSpeedMult: 1.05 },
+            { id: 3, name: '彩虹湖', fishCount: 50, mouseCount: 4, timeLimit: 140, mazeComplexity: 'medium', itemTypes: ['speed', 'shield', 'freeze', 'invisibility'], mouseSpeedMult: 1.1 },
+            { id: 4, name: '宝石湾', fishCount: 60, mouseCount: 4, timeLimit: 150, mazeComplexity: 'medium', itemTypes: ['speed', 'shield', 'freeze', 'invisibility', 'decoy'], mouseSpeedMult: 1.15 },
+            { id: 5, name: '龙宫', fishCount: 70, mouseCount: 5, timeLimit: 160, mazeComplexity: 'complex', itemTypes: ['speed', 'shield', 'freeze', 'invisibility', 'decoy', 'time'], mouseSpeedMult: 1.2 },
+            { id: 6, name: '深渊', fishCount: 80, mouseCount: 6, timeLimit: 180, mazeComplexity: 'complex', itemTypes: ['speed', 'shield', 'freeze', 'invisibility', 'decoy', 'time'], mouseSpeedMult: 1.3 }
+        ];
+
+        const ITEM_TYPES = {
+            speed: { name: '闪电靴', icon: '⚡', duration: 10000, color: '#FFD700' },
+            shield: { name: '护盾', icon: '🛡️', duration: 8000, color: '#4169E1' },
+            invisibility: { name: '猫薄荷', icon: '🐾', duration: 5000, color: '#32CD32' },
+            freeze: { name: '冰冻弹', icon: '❄️', duration: 6000, color: '#00CED1' },
+            decoy: { name: '召唤术', icon: '🎪', duration: 12000, color: '#9370DB' },
+            time: { name: '时间沙漏', icon: '⏰', duration: 0, color: '#DAA520' }
+        };
+
+        const FISH_TYPES = {
+            normal: { points: 100, color: '#A0A0A0', probability: 0.7 },
+            gold: { points: 300, color: '#FFD700', probability: 0.2 },
+            energy: { points: 500, color: '#FF69B4', probability: 0.1 }
+        };
+
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.currentLevel = 1;
+                this.score = 0;
+                this.totalScore = 0;
+                this.levelResults = [];
+                this.items = [0, 0, 0, 0, 0, 0];
+                this.activeEffects = {};
+                this.isPaused = false;
+                this.isRunning = false;
+                this.gameStarted = false;
+                this.cat = null;
+                this.fishes = [];
+                this.mice = [];
+                this.decoys = [];
+                this.itemsOnMap = [];
+                this.maze = [];
+                this.timeRemaining = 0;
+                this.fishEaten = 0;
+                this.fishStolen = 0;
+                this.lastTime = 0;
+                this.keys = {};
+                this.unlockedLevels = this.loadProgress();
+                this.setupEventListeners();
+                this.showMainMenu();
+            }
+
+            loadProgress() {
+                const saved = localStorage.getItem('catfish_progress');
+                return saved ? JSON.parse(saved) : [1];
+            }
+
+            saveProgress() {
+                const maxUnlocked = Math.max(...this.unlockedLevels);
+                if (maxUnlocked < 6 && this.levelResults.length > 0) {
+                    const lastResult = this.levelResults[this.levelResults.length - 1];
+                    if (lastResult.percentage >= 0.6 && !this.unlockedLevels.includes(lastResult.level + 1)) {
+                        this.unlockedLevels.push(lastResult.level + 1);
+                    }
+                }
+                localStorage.setItem('catfish_progress', JSON.stringify(this.unlockedLevels));
+            }
+
+            setupEventListeners() {
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.key.toLowerCase()] = true;
+                    if (e.key === 'Escape' && this.isRunning) {
+                        this.togglePause();
+                    }
+                    if (e.key >= '1' && e.key <= '6' && this.isRunning) {
+                        this.useItem(parseInt(e.key) - 1);
+                    }
+                });
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+            }
+
+            showMainMenu() {
+                this.hideAllMenus();
+                document.getElementById('mainMenu').classList.remove('hidden');
+                this.isRunning = false;
+            }
+
+            showLevelSelect() {
+                this.hideAllMenus();
+                const grid = document.getElementById('levelSelectGrid');
+                grid.innerHTML = '';
+                LEVELS.forEach((level, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'level-btn' + (this.unlockedLevels.includes(level.id) ? '' : ' locked');
+                    btn.innerHTML = `${level.id}<span class="level-name">${level.name}</span>`;
+                    if (this.unlockedLevels.includes(level.id)) {
+                        btn.onclick = () => this.startLevel(level.id);
+                    }
+                    grid.appendChild(btn);
+                });
+                document.getElementById('levelSelectMenu').classList.remove('hidden');
+            }
+
+            showLeaderboard() {
+                this.hideAllMenus();
+                const list = document.getElementById('leaderboardList');
+                const leaderboard = this.getLeaderboard();
+                if (leaderboard.length === 0) {
+                    list.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 40px;">暂无记录</div>';
+                } else {
+                    list.innerHTML = leaderboard.map((entry, i) => `
+                        <div class="leaderboard-entry ${entry.highlight ? 'highlight' : ''}">
+                            <span class="leaderboard-rank ${i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : ''}">${i + 1}</span>
+                            <span class="leaderboard-name">${entry.name}</span>
+                            <span class="leaderboard-score">${entry.score.toLocaleString()}</span>
+                            <span class="leaderboard-date">${entry.date}</span>
+                        </div>
+                    `).join('');
+                }
+                document.getElementById('leaderboardMenu').classList.remove('hidden');
+            }
+
+            showHelp() {
+                this.hideAllMenus();
+                document.getElementById('helpMenu').classList.remove('hidden');
+            }
+
+            hideAllMenus() {
+                document.querySelectorAll('.menu-overlay, .result-overlay').forEach(el => el.classList.add('hidden'));
+            }
+
+            getLeaderboard() {
+                try {
+                    return JSON.parse(localStorage.getItem('catfish_leaderboard') || '[]');
+                } catch {
+                    return [];
+                }
+            }
+
+            startLevel(levelId) {
+                this.currentLevel = levelId;
+                const level = LEVELS[levelId - 1];
+                this.hideAllMenus();
+                this.initializeGame(level);
+                this.startCountdown();
+            }
+
+            initializeGame(level) {
+                this.score = 0;
+                this.fishEaten = 0;
+                this.fishStolen = 0;
+                this.items = [0, 0, 0, 0, 0, 0];
+                this.activeEffects = {};
+                this.decoys = [];
+                this.itemsOnMap = [];
+                this.mouseEncounters = {};
+                this.timeRemaining = level.timeLimit;
+                this.generateMaze(level);
+                this.spawnCat();
+                this.spawnFishes(level.fishCount);
+                this.spawnMice(level.mouseCount, level.mouseSpeedMult);
+                this.spawnItemsOnMap(level.itemTypes);
+                this.updateUI();
+            }
+
+            generateMaze(level) {
+                const width = 21;
+                const height = 13;
+                const centerX = Math.floor(width / 2);
+                const centerY = Math.floor(height / 2);
+                
+                this.connectedCells = [];
+                
+                let attempts = 0;
+                do {
+                    this.maze = [];
+                    for (let y = 0; y < height; y++) {
+                        this.maze[y] = [];
+                        for (let x = 0; x < width; x++) {
+                            if (y === 0 || y === height - 1 || x === 0 || x === width - 1) {
+                                this.maze[y][x] = 1;
+                            } else if (level.mazeComplexity === 'simple') {
+                                if (x % 4 === 2 && y % 4 === 2) {
+                                    this.maze[y][x] = 1;
+                                } else {
+                                    this.maze[y][x] = 0;
+                                }
+                            } else if (level.mazeComplexity === 'medium') {
+                                if ((x % 3 === 1 && y % 4 !== 1) || (y % 3 === 1 && x % 4 !== 1)) {
+                                    this.maze[y][x] = 1;
+                                } else {
+                                    this.maze[y][x] = 0;
+                                }
+                            } else {
+                                if ((x % 2 === 0 && y % 2 === 0) || (Math.random() < 0.12 && x > 2 && x < width - 3)) {
+                                    this.maze[y][x] = 1;
+                                } else {
+                                    this.maze[y][x] = 0;
+                                }
+                            }
+                        }
+                    }
+                    
+                    for (let dy = -2; dy <= 2; dy++) {
+                        for (let dx = -2; dx <= 2; dx++) {
+                            const nx = centerX + dx;
+                            const ny = centerY + dy;
+                            if (nx > 0 && nx < width - 1 && ny > 0 && ny < height - 1) {
+                                this.maze[ny][nx] = 0;
+                            }
+                        }
+                    }
+                    this.maze[1][1] = 0;
+                    this.maze[1][width - 2] = 0;
+                    this.maze[height - 2][1] = 0;
+                    this.maze[height - 2][width - 2] = 0;
+                    for (let x = 1; x < width - 1; x++) {
+                        this.maze[centerY][x] = 0;
+                    }
+                    for (let y = 1; y < height - 1; y++) {
+                        this.maze[y][centerX] = 0;
+                    }
+                    
+                    this.saveConnectedArea();
+                    
+                    attempts++;
+                } while (this.connectedCells.length < 120 && attempts < 20);
+            }
+
+            saveConnectedArea() {
+                const height = this.maze.length;
+                const width = this.maze[0].length;
+                const centerX = Math.floor(width / 2);
+                const centerY = Math.floor(height / 2);
+                
+                const visited = [];
+                for (let y = 0; y < height; y++) {
+                    visited[y] = [];
+                    for (let x = 0; x < width; x++) {
+                        visited[y][x] = false;
+                    }
+                }
+                
+                this.connectedCells = this.floodFill(centerX, centerY, visited);
+                
+                const connectedSet = new Set(this.connectedCells.map(p => `${p.x},${p.y}`));
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        if (this.maze[y][x] === 0 && !connectedSet.has(`${x},${y}`)) {
+                            this.maze[y][x] = 1;
+                        }
+                    }
+                }
+            }
+
+            floodFill(startX, startY, visited) {
+                const region = [];
+                const queue = [{x: startX, y: startY}];
+                visited[startY][startX] = true;
+                
+                while (queue.length > 0) {
+                    const {x, y} = queue.shift();
+                    region.push({x, y});
+                    
+                    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                    for (const [dx, dy] of dirs) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (nx >= 0 && nx < this.maze[0].length && ny >= 0 && ny < this.maze.length) {
+                            if (this.maze[ny][nx] === 0 && !visited[ny][nx]) {
+                                visited[ny][nx] = true;
+                                queue.push({x: nx, y: ny});
+                            }
+                        }
+                    }
+                }
+                
+                return region;
+            }
+
+            isMazeFullyConnected() {
+                const height = this.maze.length;
+                const width = this.maze[0].length;
+                const centerX = Math.floor(width / 2);
+                const centerY = Math.floor(height / 2);
+                
+                const visited = [];
+                for (let y = 0; y < height; y++) {
+                    visited[y] = [];
+                    for (let x = 0; x < width; x++) {
+                        visited[y][x] = false;
+                    }
+                }
+                
+                const region = this.floodFill(centerX, centerY, visited);
+                const regionSet = new Set(region.map(p => `${p.x},${p.y}`));
+                
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        if (this.maze[y][x] === 0 && !regionSet.has(`${x},${y}`)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            spawnCat() {
+                const cellWidth = this.canvas.width / this.maze[0].length;
+                const cellHeight = this.canvas.height / this.maze.length;
+                const centerX = Math.floor(this.maze[0].length / 2);
+                const centerY = Math.floor(this.maze.length / 2);
+                this.cat = {
+                    x: centerX * cellWidth + cellWidth / 2,
+                    y: centerY * cellHeight + cellHeight / 2,
+                    radius: 15,
+                    speed: 150,
+                    baseSpeed: 150,
+                    direction: 'right',
+                    isShielded: false,
+                    isInvisible: false,
+                    isFrozen: false
+                };
+            }
+
+            spawnFishes(count) {
+                this.fishes = [];
+                const usedCells = new Set();
+                while (this.fishes.length < count) {
+                    const cell = this.getRandomEmptyCell();
+                    const cellKey = `${cell.gridX},${cell.gridY}`;
+                    if (!usedCells.has(cellKey)) {
+                        const dist = Math.hypot(cell.x - this.cat.x, cell.y - this.cat.y);
+                        if (dist > 80) {
+                            usedCells.add(cellKey);
+                            const rand = Math.random();
+                            let type = 'normal';
+                            if (rand > 0.9) type = 'energy';
+                            else if (rand > 0.7) type = 'gold';
+                            this.fishes.push({
+                                x: cell.x,
+                                y: cell.y,
+                                type: type,
+                                eaten: false,
+                                stolen: false,
+                                bobOffset: Math.random() * Math.PI * 2
+                            });
+                        }
+                    }
+                }
+            }
+
+            spawnMice(count, speedMult) {
+                this.mice = [];
+                const usedCells = new Set();
+                for (let i = 0; i < count; i++) {
+                    let attempts = 0;
+                    while (attempts < 200) {
+                        const cell = this.getRandomEmptyCell();
+                        const cellKey = `${cell.gridX},${cell.gridY}`;
+                        if (!usedCells.has(cellKey)) {
+                            const dist = Math.hypot(cell.x - this.cat.x, cell.y - this.cat.y);
+                            if (dist > 150) {
+                                usedCells.add(cellKey);
+                                this.mice.push({
+                                    x: cell.x,
+                                    y: cell.y,
+                                    radius: 12,
+                                    speed: 80 * speedMult,
+                                    direction: Math.random() * Math.PI * 2,
+                                    state: 'patrol',
+                                    targetFish: null,
+                                    frozen: false,
+                                    pathUpdateTime: 0
+                                });
+                                break;
+                            }
+                        }
+                        attempts++;
+                    }
+                }
+            }
+
+            spawnItemsOnMap(itemTypes) {
+                this.itemsOnMap = [];
+                const usedCells = new Set();
+                itemTypes.forEach(type => {
+                    for (let i = 0; i < 2; i++) {
+                        let attempts = 0;
+                        while (attempts < 100) {
+                            const cell = this.getRandomEmptyCell();
+                            const cellKey = `${cell.gridX},${cell.gridY}`;
+                            if (!usedCells.has(cellKey)) {
+                                usedCells.add(cellKey);
+                                this.itemsOnMap.push({
+                                    x: cell.x,
+                                    y: cell.y,
+                                    type: type,
+                                    collected: false,
+                                    gridX: cell.gridX,
+                                    gridY: cell.gridY,
+                                    pulsePhase: Math.random() * Math.PI * 2
+                                });
+                                break;
+                            }
+                            attempts++;
+                        }
+                    }
+                });
+            }
+
+            startCountdown() {
+                const countdown = document.getElementById('countdown');
+                let count = 3;
+                countdown.classList.remove('hidden');
+                countdown.textContent = count;
+                const interval = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        countdown.textContent = count;
+                        countdown.style.animation = 'none';
+                        countdown.offsetHeight;
+                        countdown.style.animation = 'countPulse 1s ease-in-out';
+                    } else {
+                        countdown.classList.add('hidden');
+                        clearInterval(interval);
+                        this.isRunning = true;
+                        this.gameStarted = true;
+                        this.lastTime = performance.now();
+                        this.gameLoop();
+                    }
+                }, 1000);
+            }
+
+            gameLoop() {
+                if (!this.isRunning) return;
+                const currentTime = performance.now();
+                const deltaTime = (currentTime - this.lastTime) / 1000;
+                this.lastTime = currentTime;
+                if (!this.isPaused) {
+                    this.update(deltaTime);
+                    this.render();
+                }
+                requestAnimationFrame(() => this.gameLoop());
+            }
+
+            update(deltaTime) {
+                this.updateCat(deltaTime);
+                this.updateMice(deltaTime);
+                this.updateDecoys(deltaTime);
+                this.updateEffects(deltaTime);
+                this.checkCollisions();
+                this.updateTime(deltaTime);
+                this.checkWinLose();
+            }
+
+            updateCat(deltaTime) {
+                let dx = 0, dy = 0;
+                if (this.keys['arrowup'] || this.keys['w']) dy = -1;
+                if (this.keys['arrowdown'] || this.keys['s']) dy = 1;
+                if (this.keys['arrowleft'] || this.keys['a']) dx = -1;
+                if (this.keys['arrowright'] || this.keys['d']) dx = 1;
+                let speed = this.cat.speed;
+                if (this.activeEffects.speed) speed *= 1.5;
+                if (dx !== 0 || dy !== 0) {
+                    if (dx !== 0) this.cat.direction = dx > 0 ? 'right' : 'left';
+                    if (dy !== 0) this.cat.direction = dy > 0 ? 'down' : 'up';
+                    const len = Math.hypot(dx, dy);
+                    dx /= len;
+                    dy /= len;
+                    const newX = this.cat.x + dx * speed * deltaTime;
+                    const newY = this.cat.y + dy * speed * deltaTime;
+                    if (this.canMove(newX, this.cat.y, this.cat.radius)) this.cat.x = newX;
+                    if (this.canMove(this.cat.x, newY, this.cat.radius)) this.cat.y = newY;
+                }
+            }
+
+            updateMice(deltaTime) {
+                const cellWidth = this.canvas.width / this.maze[0].length;
+                const cellHeight = this.canvas.height / this.maze.length;
+                this.mice.forEach(mouse => {
+                    if (mouse.frozen) return;
+                    
+                    // 检查是否有假猫并优先追
+                    let targetDecoy = null;
+                    if (this.decoys.length > 0 && this.activeEffects.decoy) {
+                        let minDist = Infinity;
+                        this.decoys.forEach(decoy => {
+                            const dist = Math.hypot(mouse.x - decoy.x, mouse.y - decoy.y);
+                            if (dist < minDist) {
+                                minDist = dist;
+                                targetDecoy = decoy;
+                            }
+                        });
+                    }
+
+                    if (targetDecoy && Math.hypot(mouse.x - targetDecoy.x, mouse.y - targetDecoy.y) < 200) {
+                        // 追假猫
+                        mouse.state = 'chase';
+                        const angle = Math.atan2(targetDecoy.y - mouse.y, targetDecoy.x - mouse.x);
+                        mouse.direction = angle;
+                    } else {
+                        // 正常行为
+                        const distToCat = Math.hypot(mouse.x - this.cat.x, mouse.y - this.cat.y);
+                        if (!this.cat.isInvisible && distToCat < 150) {
+                            mouse.state = 'chase';
+                        } else if (mouse.state === 'chase') {
+                            mouse.state = 'patrol';
+                        }
+                        if (mouse.state === 'patrol') {
+                            const availableFishes = this.fishes.filter(f => !f.eaten && !f.stolen);
+                            if (availableFishes.length > 0) {
+                                const nearest = availableFishes.reduce((a, b) => 
+                                    Math.hypot(a.x - mouse.x, a.y - mouse.y) < Math.hypot(b.x - mouse.x, b.y - mouse.y) ? a : b
+                                );
+                                if (Math.hypot(nearest.x - mouse.x, nearest.y - mouse.y) < 120) {
+                                    mouse.state = 'steal';
+                                    mouse.targetFish = nearest;
+                                }
+                            }
+                        }
+                    }
+
+                    let targetX, targetY;
+                    if (mouse.state === 'chase' && targetDecoy) {
+                        targetX = targetDecoy.x;
+                        targetY = targetDecoy.y;
+                    } else if (mouse.state === 'chase') {
+                        targetX = this.cat.x;
+                        targetY = this.cat.y;
+                    } else if (mouse.state === 'steal' && mouse.targetFish) {
+                        targetX = mouse.targetFish.x;
+                        targetY = mouse.targetFish.y;
+                    } else {
+                        const angle = mouse.direction + (Math.random() - 0.5) * 0.5;
+                        targetX = mouse.x + Math.cos(angle) * 100;
+                        targetY = mouse.y + Math.sin(angle) * 100;
+                    }
+                    
+                    const angle = Math.atan2(targetY - mouse.y, targetX - mouse.x);
+                    mouse.direction = angle;
+                    const newX = mouse.x + Math.cos(angle) * mouse.speed * deltaTime;
+                    const newY = mouse.y + Math.sin(angle) * mouse.speed * deltaTime;
+                    if (this.canMove(newX, mouse.y, mouse.radius)) mouse.x = newX;
+                    else mouse.direction = Math.PI - mouse.direction;
+                    if (this.canMove(mouse.x, newY, mouse.radius)) mouse.y = newY;
+                    else mouse.direction = -mouse.direction;
+                    
+                    if (mouse.state === 'steal' && mouse.targetFish) {
+                        if (Math.hypot(mouse.x - mouse.targetFish.x, mouse.y - mouse.targetFish.y) < 15) {
+                            mouse.targetFish.stolen = true;
+                            mouse.state = 'patrol';
+                            mouse.targetFish = null;
+                            this.fishStolen++;
+                            this.createParticles(mouse.x, mouse.y, '#ff0000', 5);
+                        }
+                    }
+                });
+            }
+
+            updateDecoys(deltaTime) {
+                this.decoys.forEach(decoy => {
+                    decoy.timer -= deltaTime * 1000;
+                    if (decoy.timer > 0) {
+                        const angle = decoy.direction + (Math.random() - 0.5) * 0.3;
+                        const newX = decoy.x + Math.cos(angle) * decoy.speed * deltaTime;
+                        const newY = decoy.y + Math.sin(angle) * decoy.speed * deltaTime;
+                        if (this.canMove(newX, decoy.y, decoy.radius)) decoy.x = newX;
+                        if (this.canMove(decoy.x, newY, decoy.radius)) decoy.y = newY;
+                        decoy.direction += (Math.random() - 0.5) * 0.1;
+                    }
+                });
+                this.decoys = this.decoys.filter(d => d.timer > 0);
+            }
+
+            updateEffects(deltaTime) {
+                Object.keys(this.activeEffects).forEach(key => {
+                    this.activeEffects[key] -= deltaTime * 1000;
+                    if (this.activeEffects[key] <= 0) {
+                        delete this.activeEffects[key];
+                        if (key === 'speed') {
+                            this.cat.speed = this.cat.baseSpeed;
+                            this.showFloatingScore(this.cat.x, this.cat.y - 20, '⏱️ 加速结束', '#FFD700');
+                        }
+                        if (key === 'shield') {
+                            this.cat.isShielded = false;
+                            this.showFloatingScore(this.cat.x, this.cat.y - 20, '⏱️ 护盾消失', '#4169E1');
+                        }
+                        if (key === 'invisibility') {
+                            this.cat.isInvisible = false;
+                            this.showFloatingScore(this.cat.x, this.cat.y - 20, '⏱️ 现身了', '#32CD32');
+                        }
+                        if (key === 'freeze') {
+                            this.mice.forEach(m => m.frozen = false);
+                            this.showFloatingScore(this.cat.x, this.cat.y - 20, '⏱️ 解冻了', '#00CED1');
+                        }
+                        if (key === 'decoy') {
+                            this.showFloatingScore(this.cat.x, this.cat.y - 20, '⏱️ 假猫消失', '#9370DB');
+                        }
+                    }
+                });
+                this.itemsOnMap.forEach(item => {
+                    item.pulsePhase += deltaTime * 3;
+                });
+            }
+
+            canMove(x, y, radius) {
+                const cellWidth = this.canvas.width / this.maze[0].length;
+                const cellHeight = this.canvas.height / this.maze.length;
+                const margin = radius * 0.6;
+                // 检查四个角点以确保安全
+                const corners = [
+                    [x - margin, y - margin],
+                    [x + margin, y - margin],
+                    [x - margin, y + margin],
+                    [x + margin, y + margin]
+                ];
+                return corners.every(([px, py]) => {
+                    const gridX = Math.floor(px / cellWidth);
+                    const gridY = Math.floor(py / cellHeight);
+                    if (gridX < 0 || gridX >= this.maze[0].length || gridY < 0 || gridY >= this.maze.length) {
+                        return false;
+                    }
+                    return this.maze[gridY][gridX] === 0;
+                });
+            }
+
+            getRandomEmptyCell() {
+                const cellWidth = this.canvas.width / this.maze[0].length;
+                const cellHeight = this.canvas.height / this.maze.length;
+                
+                if (this.connectedCells && this.connectedCells.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * this.connectedCells.length);
+                    const cell = this.connectedCells[randomIndex];
+                    return {
+                        gridX: cell.x,
+                        gridY: cell.y,
+                        x: cell.x * cellWidth + cellWidth / 2,
+                        y: cell.y * cellHeight + cellHeight / 2
+                    };
+                }
+                
+                const centerX = Math.floor(this.maze[0].length / 2);
+                const centerY = Math.floor(this.maze.length / 2);
+                return {
+                    gridX: centerX,
+                    gridY: centerY,
+                    x: centerX * cellWidth + cellWidth / 2,
+                    y: centerY * cellHeight + cellHeight / 2
+                };
+            }
+
+            checkCollisions() {
+                this.fishes.forEach(fish => {
+                    if (!fish.eaten && !fish.stolen) {
+                        const dist = Math.hypot(fish.x - this.cat.x, fish.y - this.cat.y);
+                        if (dist < this.cat.radius + 10) {
+                            fish.eaten = true;
+                            this.fishEaten++;
+                            const points = FISH_TYPES[fish.type].points;
+                            this.score += points;
+                            this.showFloatingScore(fish.x, fish.y, '+' + points, FISH_TYPES[fish.type].color);
+                            this.createParticles(fish.x, fish.y, FISH_TYPES[fish.type].color, 8);
+                            this.updateUI();
+                        }
+                    }
+                });
+                this.itemsOnMap.forEach(item => {
+                    if (!item.collected) {
+                        const dist = Math.hypot(item.x - this.cat.x, item.y - this.cat.y);
+                        if (dist < this.cat.radius + 12) {
+                            item.collected = true;
+                            const itemIndex = Object.keys(ITEM_TYPES).indexOf(item.type);
+                            if (itemIndex !== -1) this.items[itemIndex]++;
+                            this.showFloatingScore(item.x, item.y, ITEM_TYPES[item.type].name, ITEM_TYPES[item.type].color);
+                            this.createParticles(item.x, item.y, ITEM_TYPES[item.type].color, 10);
+                            this.updateItemsBar();
+                        }
+                    }
+                });
+                // 处理猫和老鼠的碰撞
+                this.mice.forEach((mouse, index) => {
+                    const dist = Math.hypot(mouse.x - this.cat.x, mouse.y - this.cat.y);
+                    if (dist < this.cat.radius + mouse.radius) {
+                        const encounterKey = `mouse_${index}`;
+                        this.mouseEncounters[encounterKey] = (this.mouseEncounters[encounterKey] || 0) + 1;
+                        
+                        if (this.mouseEncounters[encounterKey] >= 2) {
+                            // 第二次碰到，可以吃掉老鼠
+                            this.score += 200;
+                            this.showFloatingScore(mouse.x, mouse.y, '🐭 +200', '#ff0000');
+                            this.createParticles(mouse.x, mouse.y, '#ff0000', 12);
+                            this.mice.splice(index, 1);
+                            delete this.mouseEncounters[encounterKey];
+                            this.updateUI();
+                        } else {
+                            // 第一次碰到
+                            this.showFloatingScore(mouse.x, mouse.y, '⚠️ ' + (2 - this.mouseEncounters[encounterKey]) + '次', '#ffaa00');
+                        }
+                    }
+                });
+            }
+
+            updateTime(deltaTime) {
+                this.timeRemaining -= deltaTime;
+                if (this.timeRemaining <= 0) {
+                    this.timeRemaining = 0;
+                    this.endLevel();
+                }
+                document.getElementById('timeDisplay').textContent = Math.ceil(this.timeRemaining);
+                if (this.timeRemaining <= 30) {
+                    document.getElementById('timeDisplay').style.color = '#ff0000';
+                } else {
+                    document.getElementById('timeDisplay').style.color = '';
+                }
+            }
+
+            checkWinLose() {
+                const totalFish = this.fishes.length;
+                const remainingFish = this.fishes.filter(f => !f.eaten && !f.stolen).length;
+                const stolenFish = this.fishes.filter(f => f.stolen).length;
+                if (remainingFish === 0) {
+                    this.endLevel();
+                } else if (this.fishEaten + stolenFish === totalFish) {
+                    this.endLevel();
+                }
+            }
+
+            useItem(index) {
+                if (this.items[index] > 0) {
+                    const itemKeys = Object.keys(ITEM_TYPES);
+                    const itemType = itemKeys[index];
+                    const item = ITEM_TYPES[itemType];
+                    this.items[index]--;
+                    this.updateItemsBar();
+                    if (itemType === 'time') {
+                        this.timeRemaining += 30;
+                        this.showFloatingScore(this.cat.x, this.cat.y, '⏰ +30秒', '#DAA520');
+                    } else if (itemType === 'decoy') {
+                        for (let i = 0; i < 2; i++) {
+                            this.decoys.push({
+                                x: this.cat.x + (Math.random() - 0.5) * 100,
+                                y: this.cat.y + (Math.random() - 0.5) * 100,
+                                radius: 12,
+                                speed: 60,
+                                direction: Math.random() * Math.PI * 2,
+                                timer: 12000
+                            });
+                        }
+                        this.activeEffects.decoy = item.duration;
+                        this.showFloatingScore(this.cat.x, this.cat.y, '🎪 假猫出现', '#9370DB');
+                    } else if (itemType === 'freeze') {
+                        this.activeEffects.freeze = item.duration;
+                        this.mice.forEach(m => m.frozen = true);
+                        this.showFloatingScore(this.cat.x, this.cat.y, '❄️ 老鼠冻结!', '#00CED1');
+                    } else if (itemType === 'speed') {
+                        this.activeEffects.speed = item.duration;
+                        this.cat.speed = this.cat.baseSpeed * 1.5;
+                        this.showFloatingScore(this.cat.x, this.cat.y, '⚡ 加速!', '#FFD700');
+                    } else if (itemType === 'shield') {
+                        this.activeEffects.shield = item.duration;
+                        this.cat.isShielded = true;
+                        this.showFloatingScore(this.cat.x, this.cat.y, '🛡️ 护盾激活!', '#4169E1');
+                    } else if (itemType === 'invisibility') {
+                        this.activeEffects.invisibility = item.duration;
+                        this.cat.isInvisible = true;
+                        this.showFloatingScore(this.cat.x, this.cat.y, '🐾 隐身中!', '#32CD32');
+                    }
+                }
+            }
+
+            showFloatingScore(x, y, text, color) {
+                const container = document.getElementById('gameContainer');
+                const rect = this.canvas.getBoundingClientRect();
+                const scaleX = rect.width / this.canvas.width;
+                const scaleY = rect.height / this.canvas.height;
+                const floatEl = document.createElement('div');
+                floatEl.className = 'floating-score';
+                floatEl.textContent = text;
+                floatEl.style.left = (rect.left - container.getBoundingClientRect().left + x * scaleX) + 'px';
+                floatEl.style.top = (rect.top - container.getBoundingClientRect().top + y * scaleY) + 'px';
+                floatEl.style.color = color;
+                container.appendChild(floatEl);
+                setTimeout(() => floatEl.remove(), 1000);
+            }
+
+            createParticles(x, y, color, count) {
+                const container = document.getElementById('particlesContainer');
+                for (let i = 0; i < count; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.background = color;
+                    particle.style.left = (x + (Math.random() - 0.5) * 40) + 'px';
+                    particle.style.top = (y + (Math.random() - 0.5) * 40) + 'px';
+                    particle.style.transform = `translate(${(Math.random() - 0.5) * 100}px, ${(Math.random() - 0.5) * 100}px)`;
+                    container.appendChild(particle);
+                    setTimeout(() => particle.remove(), 1000);
+                }
+            }
+
+            render() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.drawBackground();
+                this.drawMaze();
+                this.drawItemsOnMap();
+                this.drawFishes();
+                this.drawDecoys();
+                this.drawMice();
+                this.drawCat();
+                this.drawEffects();
+            }
+
+            drawBackground() {
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                gradient.addColorStop(0, '#0a0a1a');
+                gradient.addColorStop(1, '#1a1a3a');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                for (let i = 0; i < 50; i++) {
+                    const x = (i * 73) % this.canvas.width;
+                    const y = (i * 47) % this.canvas.height;
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${0.1 + Math.sin(Date.now() / 1000 + i) * 0.05})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 1, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+
+            drawMaze() {
+                const cellWidth = this.canvas.width / this.maze[0].length;
+                const cellHeight = this.canvas.height / this.maze.length;
+                this.ctx.fillStyle = '#1a3a5c';
+                this.ctx.strokeStyle = '#2a5a8c';
+                this.ctx.lineWidth = 2;
+                for (let y = 0; y < this.maze.length; y++) {
+                    for (let x = 0; x < this.maze[y].length; x++) {
+                        if (this.maze[y][x] === 1) {
+                            const px = x * cellWidth;
+                            const py = y * cellHeight;
+                            this.ctx.fillStyle = '#1a3a5c';
+                            this.ctx.fillRect(px, py, cellWidth, cellHeight);
+                            this.ctx.strokeStyle = '#3a7ab8';
+                            this.ctx.strokeRect(px + 1, py + 1, cellWidth - 2, cellHeight - 2);
+                        }
+                    }
+                }
+            }
+
+            drawItemsOnMap() {
+                this.itemsOnMap.forEach(item => {
+                    if (!item.collected) {
+                        const pulse = Math.sin(item.pulsePhase) * 0.2 + 1;
+                        this.ctx.save();
+                        this.ctx.translate(item.x, item.y);
+                        this.ctx.scale(pulse, pulse);
+                        this.ctx.font = '24px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.textBaseline = 'middle';
+                        this.ctx.shadowColor = ITEM_TYPES[item.type].color;
+                        this.ctx.shadowBlur = 15;
+                        this.ctx.fillText(ITEM_TYPES[item.type].icon, 0, 0);
+                        this.ctx.restore();
+                    }
+                });
+            }
+
+            drawFishes() {
+                const time = Date.now() / 1000;
+                this.fishes.forEach(fish => {
+                    if (!fish.eaten && !fish.stolen) {
+                        const bob = Math.sin(time * 3 + fish.bobOffset) * 3;
+                        this.ctx.save();
+                        this.ctx.translate(fish.x, fish.y + bob);
+                        const size = 12;
+                        this.ctx.fillStyle = FISH_TYPES[fish.type].color;
+                        this.ctx.shadowColor = FISH_TYPES[fish.type].color;
+                        this.ctx.shadowBlur = fish.type === 'energy' ? 15 : 8;
+                        this.ctx.beginPath();
+                        this.ctx.ellipse(0, 0, size, size * 0.6, 0, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(-size, 0);
+                        this.ctx.lineTo(-size - 8, -6);
+                        this.ctx.lineTo(-size - 8, 6);
+                        this.ctx.closePath();
+                        this.ctx.fill();
+                        this.ctx.fillStyle = '#000';
+                        this.ctx.beginPath();
+                        this.ctx.arc(size * 0.4, -2, 2, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        this.ctx.restore();
+                    }
+                });
+            }
+
+            drawDecoys() {
+                this.decoys.forEach(decoy => {
+                    this.ctx.save();
+                    this.ctx.translate(decoy.x, decoy.y);
+                    this.ctx.globalAlpha = 0.6;
+                    this.ctx.fillStyle = '#ff6b35';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, decoy.radius, 0.2 * Math.PI, 1.8 * Math.PI);
+                    this.ctx.lineTo(0, 0);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.beginPath();
+                    this.ctx.arc(-4, -2, 3, 0, Math.PI * 2);
+                    this.ctx.arc(4, -2, 3, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                });
+            }
+
+            drawMice() {
+                const time = Date.now() / 500;
+                this.mice.forEach(mouse => {
+                    this.ctx.save();
+                    this.ctx.translate(mouse.x, mouse.y);
+                    const dir = Math.atan2(
+                        Math.sin(mouse.direction) * mouse.speed,
+                        Math.cos(mouse.direction) * mouse.speed
+                    );
+                    this.ctx.rotate(dir);
+                    if (mouse.frozen) {
+                        this.ctx.globalAlpha = 0.5;
+                        this.ctx.fillStyle = '#87CEEB';
+                    } else {
+                        this.ctx.fillStyle = '#808080';
+                    }
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(0, 0, mouse.radius, mouse.radius * 0.7, 0, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.beginPath();
+                    this.ctx.arc(-mouse.radius * 0.5, -mouse.radius * 0.3, 4, 0, Math.PI * 2);
+                    this.ctx.arc(-mouse.radius * 0.5, mouse.radius * 0.3, 4, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.fillStyle = mouse.frozen ? '#87CEEB' : '#ff69b4';
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(mouse.radius * 0.6, 0, 8, 4, 0, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.fillStyle = '#000';
+                    this.ctx.beginPath();
+                    this.ctx.arc(-mouse.radius * 0.3, -3, 2, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                    if (mouse.frozen) {
+                        this.ctx.save();
+                        this.ctx.translate(mouse.x, mouse.y - mouse.radius - 8);
+                        this.ctx.font = '12px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText('❄️', 0, 0);
+                        this.ctx.restore();
+                    }
+                });
+            }
+
+            drawCat() {
+                this.ctx.save();
+                this.ctx.translate(this.cat.x, this.cat.y);
+                let rotation = 0;
+                if (this.cat.direction === 'right') rotation = 0;
+                else if (this.cat.direction === 'down') rotation = Math.PI / 2;
+                else if (this.cat.direction === 'left') rotation = Math.PI;
+                else if (this.cat.direction === 'up') rotation = -Math.PI / 2;
+                this.ctx.rotate(rotation);
+                if (this.cat.isInvisible) {
+                    this.ctx.globalAlpha = 0.3;
+                }
+                if (this.cat.isShielded) {
+                    this.ctx.shadowColor = '#4169E1';
+                    this.ctx.shadowBlur = 25;
+                }
+                this.ctx.fillStyle = '#ff6b35';
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, this.cat.radius, 0.2 * Math.PI, 1.8 * Math.PI);
+                this.ctx.lineTo(0, 0);
+                this.ctx.closePath();
+                this.ctx.fill();
+                this.ctx.fillStyle = '#fff';
+                this.ctx.beginPath();
+                this.ctx.arc(-4, -5, 4, 0, Math.PI * 2);
+                this.ctx.arc(-4, 5, 4, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.fillStyle = '#000';
+                this.ctx.beginPath();
+                this.ctx.arc(-2, -5, 2, 0, Math.PI * 2);
+                this.ctx.arc(-2, 5, 2, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.fillStyle = '#ff6b35';
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.cat.radius - 5, 0);
+                this.ctx.lineTo(this.cat.radius + 5, -4);
+                this.ctx.lineTo(this.cat.radius + 5, 4);
+                this.ctx.closePath();
+                this.ctx.fill();
+                this.ctx.restore();
+                if (this.cat.isShielded) {
+                    this.ctx.save();
+                    this.ctx.strokeStyle = '#4169E1';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.shadowColor = '#4169E1';
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.cat.x, this.cat.y, this.cat.radius + 8, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.restore();
+                }
+                if (this.activeEffects.speed) {
+                    this.ctx.save();
+                    this.ctx.translate(this.cat.x + 10, this.cat.y - 10);
+                    this.ctx.font = '16px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('⚡', 0, 0);
+                    this.ctx.restore();
+                }
+            }
+
+            drawEffects() {
+                let effectIndex = 0;
+                Object.keys(this.activeEffects).forEach(key => {
+                    const remaining = this.activeEffects[key];
+                    const item = ITEM_TYPES[key];
+                    if (item) {
+                        const x = 10 + effectIndex * 110;
+                        const y = this.canvas.height - 50;
+                        
+                        // 绘制图标
+                        this.ctx.save();
+                        this.ctx.font = '20px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText(item.icon, x + 40, y + 15);
+                        
+                        // 绘制进度条
+                        const progress = remaining / item.duration;
+                        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                        this.ctx.fillRect(x, y + 20, 80, 8);
+                        this.ctx.fillStyle = item.color;
+                        this.ctx.fillRect(x, y + 20, 80 * progress, 8);
+                        this.ctx.strokeStyle = item.color;
+                        this.ctx.strokeRect(x, y + 20, 80, 8);
+                        
+                        // 绘制剩余时间
+                        this.ctx.font = '10px Arial';
+                        this.ctx.fillStyle = '#fff';
+                        this.ctx.textAlign = 'right';
+                        this.ctx.fillText(Math.ceil(remaining / 1000) + 's', x + 80, y + 38);
+                        
+                        this.ctx.restore();
+                        effectIndex++;
+                    }
+                });
+            }
+
+            updateUI() {
+                document.getElementById('levelDisplay').textContent = this.currentLevel;
+                document.getElementById('scoreDisplay').textContent = this.score;
+                const total = this.fishes.length;
+                document.getElementById('fishDisplay').textContent = `${this.fishEaten}/${total}`;
+            }
+
+            updateItemsBar() {
+                const slots = document.querySelectorAll('.item-slot');
+                const itemKeys = Object.keys(ITEM_TYPES);
+                slots.forEach((slot, i) => {
+                    const count = this.items[i];
+                    if (count > 0) {
+                        slot.classList.remove('empty');
+                        let countEl = slot.querySelector('.item-count');
+                        if (!countEl) {
+                            countEl = document.createElement('span');
+                            countEl.className = 'item-count';
+                            slot.appendChild(countEl);
+                        }
+                        countEl.textContent = count;
+                    } else {
+                        slot.classList.add('empty');
+                        const countEl = slot.querySelector('.item-count');
+                        if (countEl) countEl.remove();
+                    }
+                });
+            }
+
+            togglePause() {
+                this.isPaused = !this.isPaused;
+                document.getElementById('pausedIndicator').classList.toggle('hidden', !this.isPaused);
+                if (!this.isPaused) {
+                    this.lastTime = performance.now();
+                }
+            }
+
+            resumeGame() {
+                this.isPaused = false;
+                document.getElementById('pauseMenu').classList.add('hidden');
+                document.getElementById('pausedIndicator').classList.add('hidden');
+                this.lastTime = performance.now();
+            }
+
+            restartLevel() {
+                this.hideAllMenus();
+                const level = LEVELS[this.currentLevel - 1];
+                this.initializeGame(level);
+                this.startCountdown();
+            }
+
+            quitToMenu() {
+                this.isRunning = false;
+                this.totalScore = 0;
+                this.levelResults = [];
+                this.showMainMenu();
+            }
+
+            endLevel() {
+                this.isRunning = false;
+                const level = LEVELS[this.currentLevel - 1];
+                const total = this.fishes.length;
+                const percentage = this.fishEaten / total;
+                let rating, titleClass;
+                if (percentage < 0.6) {
+                    rating = '失败';
+                    titleClass = 'fail';
+                } else if (percentage < 0.8) {
+                    rating = '通过';
+                    titleClass = 'pass';
+                } else if (percentage < 1) {
+                    rating = '优秀';
+                    titleClass = 'good';
+                } else {
+                    rating = '完美';
+                    titleClass = 'perfect';
+                }
+                let levelBonus = 0;
+                if (percentage >= 1) levelBonus = 5000;
+                else if (percentage >= 0.8) levelBonus = 3000;
+                else if (percentage >= 0.6) levelBonus = 1000;
+                const timeBonus = Math.floor(this.timeRemaining) * 10;
+                const levelScore = this.score + levelBonus + timeBonus;
+                this.totalScore += levelScore;
+                const result = {
+                    level: this.currentLevel,
+                    fishEaten: this.fishEaten,
+                    totalFish: total,
+                    percentage: percentage,
+                    rating: rating,
+                    baseScore: this.score,
+                    levelBonus: levelBonus,
+                    timeBonus: timeBonus,
+                    totalLevelScore: levelScore
+                };
+                this.levelResults.push(result);
+                this.saveProgress();
+                const title = document.getElementById('resultTitle');
+                title.textContent = rating === '完美' ? '🏆 完美! 🏆' : rating + '!';
+                title.className = 'result-title ' + titleClass;
+                document.getElementById('resultStats').innerHTML = `
+                    <div class="result-stat"><span class="result-stat-label">吃到鱼类</span><span class="result-stat-value">${this.fishEaten}/${total}</span></div>
+                    <div class="result-stat"><span class="result-stat-label">完成率</span><span class="result-stat-value">${(percentage * 100).toFixed(1)}%</span></div>
+                    <div class="result-stat"><span class="result-stat-label">基础得分</span><span class="result-stat-value">${this.score.toLocaleString()}</span></div>
+                    <div class="result-stat"><span class="result-stat-label">关卡奖励</span><span class="result-stat-value">+${levelBonus.toLocaleString()}</span></div>
+                    <div class="result-stat"><span class="result-stat-label">时间奖励</span><span class="result-stat-value">+${timeBonus.toLocaleString()}</span></div>
+                    <div class="result-stat"><span class="result-stat-label" style="color: var(--accent);">本关得分</span><span class="result-stat-value" style="color: var(--accent);">${levelScore.toLocaleString()}</span></div>
+                    <div class="result-stat"><span class="result-stat-label">总得分</span><span class="result-stat-value">${this.totalScore.toLocaleString()}</span></div>
+                `;
+                const buttons = document.getElementById('resultButtons');
+                if (this.currentLevel < 6 && percentage >= 0.6) {
+                    buttons.innerHTML = `
+                        <button class="menu-btn primary" onclick="game.nextLevel()">下一关</button>
+                        <button class="menu-btn secondary" onclick="game.showGameEnd()">结束游戏</button>
+                    `;
+                } else {
+                    buttons.innerHTML = `
+                        <button class="menu-btn primary" onclick="game.showGameEnd()">查看结果</button>
+                        <button class="menu-btn secondary" onclick="game.quitToMenu()">返回主菜单</button>
+                    `;
+                }
+                document.getElementById('levelResult').classList.remove('hidden');
+            }
+
+            nextLevel() {
+                if (this.currentLevel < 6) {
+                    this.currentLevel++;
+                    this.hideAllMenus();
+                    const level = LEVELS[this.currentLevel - 1];
+                    this.initializeGame(level);
+                    this.startCountdown();
+                }
+            }
+
+            showGameEnd() {
+                this.hideAllMenus();
+                const leaderboard = this.getLeaderboard();
+                const isHighScore = leaderboard.length < 100 || this.totalScore > leaderboard[leaderboard.length - 1].score;
+                document.getElementById('resultTitle').textContent = '🎮 游戏结束 🎮';
+                document.getElementById('resultTitle').className = 'result-title good';
+                document.getElementById('resultStats').innerHTML = `
+                    <div class="result-stat"><span class="result-stat-label">通关关卡</span><span class="result-stat-value">${this.levelResults.length}/6</span></div>
+                    <div class="result-stat"><span class="result-stat-label">完美通关</span><span class="result-stat-value">${this.levelResults.filter(r => r.rating === '完美').length} 关</span></div>
+                    <div class="result-stat"><span class="result-stat-label" style="color: var(--accent); font-size: 16px;">最终得分</span><span class="result-stat-value" style="color: var(--accent); font-size: 18px;">${this.totalScore.toLocaleString()}</span></div>
+                    ${isHighScore ? '<div class="result-stat"><span class="result-stat-label" style="color: #ff69b4;">🎉 新纪录!</span></div>' : ''}
+                `;
+                const buttons = document.getElementById('resultButtons');
+                if (isHighScore && this.totalScore > 0) {
+                    buttons.innerHTML = `
+                        <button class="menu-btn primary" onclick="game.showNameInput()">录入排行榜</button>
+                        <button class="menu-btn secondary" onclick="game.quitToMenu()">返回主菜单</button>
+                    `;
+                } else {
+                    buttons.innerHTML = `
+                        <button class="menu-btn primary" onclick="game.showLeaderboard()">查看排行榜</button>
+                        <button class="menu-btn secondary" onclick="game.quitToMenu()">返回主菜单</button>
+                    `;
+                }
+                document.getElementById('levelResult').classList.remove('hidden');
+            }
+
+            showNameInput() {
+                document.getElementById('playerNameInput').value = '';
+                document.getElementById('levelResult').classList.add('hidden');
+                document.getElementById('nameInputMenu').classList.remove('hidden');
+            }
+
+            saveScore() {
+                const name = document.getElementById('playerNameInput').value.toUpperCase().replace(/[^A-Z0-9!@#$%]/g, '') || 'AAA';
+                const finalName = name.substring(0, 3).padEnd(3, 'A');
+                const leaderboard = this.getLeaderboard();
+                const entry = {
+                    name: finalName,
+                    score: this.totalScore,
+                    date: new Date().toISOString().split('T')[0],
+                    highlight: true
+                };
+                leaderboard.push(entry);
+                leaderboard.sort((a, b) => b.score - a.score);
+                const trimmed = leaderboard.slice(0, 100);
+                localStorage.setItem('catfish_leaderboard', JSON.stringify(trimmed));
+                document.getElementById('nameInputMenu').classList.add('hidden');
+                this.showLeaderboard();
+            }
+        }
+
+        const game = new Game();
+    </script>
+</body>
+</html>
