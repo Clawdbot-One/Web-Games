@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>老鼠偷吃鱼 - 趣味益智游戏</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 主菜单界面 -->
+  <div id="menuScreen" class="screen">
+    <div class="menu-emoji">🐭🐟🐱</div>
+    <h1 class="menu-title">老鼠偷吃鱼</h1>
+    <p class="menu-subtitle">帮助小老鼠收集美味的鱼，小心不要被猫咪抓到！</p>
+    <div>
+      <button id="btnStartGame" class="btn btn-primary">开始游戏</button>
+    </div>
+    <div>
+      <button id="btnShowLeaderboard" class="btn btn-secondary">排行榜</button>
+      <button id="btnShowManual" class="btn btn-secondary">游戏说明</button>
+    </div>
+  </div>
+
+  <!-- 游戏界面 -->
+  <div id="gameScreen" class="screen">
+    <div class="game-container">
+      <div class="game-header">
+        <div class="status-item">
+          <span>关卡</span>
+          <strong id="currentLevel">1</strong>
+        </div>
+        <div class="status-item">
+          <span id="livesCount">❤️❤️❤️</span>
+        </div>
+        <div class="status-item">
+          <span>🐟</span>
+          <span id="fishCount">0/10</span>
+        </div>
+        <div class="status-item">
+          <span>⏱️</span>
+          <span id="timeLeft">120</span>
+        </div>
+        <div class="status-item">
+          <span>🏆</span>
+          <span id="scoreValue">0</span>
+        </div>
+        <div class="status-item" id="powerupStatus"></div>
+      </div>
+      
+      <div class="game-wrapper">
+        <canvas id="gameCanvas" width="608" height="480"></canvas>
+        <div id="pauseOverlay" class="pause-overlay">
+          <h2>游戏暂停</h2>
+          <div>
+            <button id="btnResumeGame" class="btn btn-success">继续游戏</button>
+            <button id="btnQuitGame" class="btn btn-secondary">返回菜单</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 虚拟控制器（移动端） -->
+      <div class="virtual-controls">
+        <div class="control-dpad">
+          <button id="btnUp" class="control-btn">⬆️</button>
+          <button id="btnLeft" class="control-btn">⬅️</button>
+          <button id="btnRight" class="control-btn">➡️</button>
+          <button id="btnDown" class="control-btn">⬇️</button>
+        </div>
+      </div>
+      
+      <div>
+        <button id="btnBackToMenu" class="btn btn-secondary">返回菜单</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 关卡结果界面 -->
+  <div id="resultScreen" class="screen">
+    <div class="result-card">
+      <h2 class="page-title">关卡结果</h2>
+      <div id="resultRating" class="result-rating">完美！</div>
+      <div class="result-stats">
+        <p id="resultLevel">第 1 关</p>
+        <p id="resultFish">收集鱼: 10/10 (100%)</p>
+        <p id="resultScore" class="result-score">得分: 0</p>
+      </div>
+      <div>
+        <button id="btnNextLevel" class="btn btn-primary">下一关</button>
+        <button id="btnRetryLevel" class="btn btn-warning">重试关卡</button>
+        <button id="btnSubmitScore" class="btn btn-success">提交分数</button>
+        <button id="btnBackFromResult" class="btn btn-secondary">返回菜单</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提交分数界面 -->
+  <div id="submitScoreScreen" class="screen">
+    <div class="submit-form">
+      <h2>恭喜！你的分数上榜了！</h2>
+      <p>请输入你的名字（3个字符）</p>
+      <input type="text" id="playerName" maxlength="3" placeholder="ABC" autocomplete="off">
+      <div>
+        <button id="btnConfirmSubmit" class="btn btn-success">确认提交</button>
+        <button id="btnCancelSubmit" class="btn btn-secondary">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 排行榜界面 -->
+  <div id="leaderboardScreen" class="screen">
+    <h2 class="page-title">🏆 排行榜</h2>
+    <div id="leaderboardContainer" class="leaderboard-container">
+      <div class="empty-leaderboard">暂无记录，快来挑战吧！</div>
+    </div>
+    <div>
+      <button id="btnBackFromLeaderboard" class="btn btn-secondary">返回菜单</button>
+    </div>
+  </div>
+
+  <!-- 游戏说明界面 -->
+  <div id="manualScreen" class="screen">
+    <h2 class="page-title">📖 游戏说明</h2>
+    <div class="manual-container">
+      <div class="manual-section">
+        <h3>🎮 游戏目标</h3>
+        <p>控制小老鼠在迷宫中收集所有的鱼，同时躲避猫咪的追捕。收集足够的鱼即可通关！</p>
+      </div>
+      
+      <div class="manual-section">
+        <h3>🕹️ 操作方式</h3>
+        <ul>
+          <li>使用键盘方向键或WASD键移动</li>
+          <li>按ESC键或P键暂停游戏</li>
+          <li>手机用户可以使用屏幕上的虚拟方向键</li>
+        </ul>
+      </div>
+      
+      <div class="manual-section">
+        <h3>⭐ 道具系统</h3>
+        <div class="powerup-list">
+          <div class="powerup-item">
+            <span class="powerup-emoji">🧹</span>
+            <span>魔法扫帚：让猫咪害怕5秒</span>
+          </div>
+          <div class="powerup-item">
+            <span class="powerup-emoji">💣</span>
+            <span>猫咪炸弹：暂时移除所有猫咪</span>
+          </div>
+          <div class="powerup-item">
+            <span class="powerup-emoji">⚡</span>
+            <span>加速药水：移动速度提升8秒</span>
+          </div>
+          <div class="powerup-item">
+            <span class="powerup-emoji">🛡️</span>
+            <span>护盾：免疫一次猫咪碰撞</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="manual-section">
+        <h3>🏅 评级系统</h3>
+        <ul>
+          <li>完美！：收集100%的鱼</li>
+          <li>优秀！：收集80%以上的鱼</li>
+          <li>通过：收集60%以上的鱼</li>
+          <li>失败：收集少于60%的鱼，或生命耗尽</li>
+        </ul>
+      </div>
+      
+      <div class="manual-section">
+        <h3>💯 得分规则</h3>
+        <ul>
+          <li>每条鱼：100分</li>
+          <li>每个道具：50分</li>
+          <li>连击加成：连击数 × 10分（2秒内连续吃鱼）</li>
+          <li>剩余生命奖励：每条生命 × 200分</li>
+          <li>剩余时间奖励：每秒 × 5分</li>
+          <li>完美通关加成：+1000分</li>
+          <li>优秀通关加成：+500分</li>
+        </ul>
+      </div>
+      
+      <div class="manual-section">
+        <h3>🎯 关卡设计</h3>
+        <p>游戏共有6个关卡，随着关卡推进，鱼的数量、猫咪的数量和迷宫复杂度都会增加。第4关开始会出现传送门，增加游戏的趣味性和策略性！</p>
+      </div>
+    </div>
+    <div style="margin-top: 20px;">
+      <button id="btnBackFromManual" class="btn btn-secondary">返回菜单</button>
+    </div>
+  </div>
+
+  <!-- 游戏脚本 -->
+  <script src="js/config.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/leaderboard.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
